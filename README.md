@@ -8,6 +8,14 @@ A production-ready Discord bot powered by **RAG (Retrieval-Augmented Generation)
 ![Redis](https://img.shields.io/badge/Redis-Cache-dc382d?style=for-the-badge&logo=redis&logoColor=white)
 ![Railway](https://img.shields.io/badge/Deployed_on-Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white)
 
+## 🤖 Add Bot to Your Server
+
+**zama_protocol_bot#1645** is ready to help with FHE questions!
+
+[![Add to Discord](https://img.shields.io/badge/Add_to_Discord-7289da?style=for-the-badge&logo=discord&logoColor=white)](https://discord.com/oauth2/authorize?client_id=1392001278174957610&permissions=274877991936&integration_type=0&scope=bot)
+
+The bot responds to direct messages and server mentions (`@zama_protocol_bot`).
+
 ## 📋 Table of Contents
 
 - [Features](#-features)
