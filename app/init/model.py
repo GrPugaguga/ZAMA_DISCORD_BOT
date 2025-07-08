@@ -9,7 +9,10 @@ logger = logging.getLogger(__name__)
 class GPT:
     def __init__(self):
         self.config = get_settings()
-        self.client = AsyncOpenAI()
+        self.client = AsyncOpenAI(
+            api_key=self.config.OPENAI_API_KEY,
+            timeout=self.config.OPENAI_TIMEOUT
+        )
         self.model = self.config.LLM_MODEL
         self.embedding_model = self.config.EMBEDDING_MODEL
     
