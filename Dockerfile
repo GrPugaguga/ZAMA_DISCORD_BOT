@@ -27,9 +27,5 @@ USER app
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-# Health check (optional but recommended)
-HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
-    CMD python -c "from app.init.config import get_settings; print('Health OK')" || exit 1
-
 # Default command to run the Discord bot
 CMD ["python", "app/main.py"]
