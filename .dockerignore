@@ -1,0 +1,62 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+.hypothesis
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+
+# Project specific
+.env
+.env.local
+.env.development
+.env.test
+*.sqlite
+*.db
+
+# Testing
+test_*.py
+tests/
+*_test.py
+.pytest_cache
+
+# Documentation (keep some essential ones)
+CLAUDE.md
+docs/
+
+# Other
+node_modules
+npm-debug.log*
