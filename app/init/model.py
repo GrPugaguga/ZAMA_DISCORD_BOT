@@ -26,12 +26,25 @@ class GPT:
                 'temperature': self.config.OPENAI_TEMPERATURE,
                 'max_tokens': self.config.OPENAI_MAX_TOKENS,
                 'timeout': self.config.OPENAI_TIMEOUT,
+                
             }
             
             # Update with any provided kwargs (allows overriding defaults)
             params.update(kwargs)
             
             response = await self.client.chat.completions.create(**params)
+            
+            # Log token usage
+            if response.usage:
+                prompt_tokens = response.usage.prompt_tokens
+                completion_tokens = response.usage.completion_tokens
+                total_tokens = response.usage.total_tokens
+                
+                logger.info(f"Token usage - Model: {params['model']}, "
+                           f"Prompt: {prompt_tokens}, "
+                           f"Completion: {completion_tokens}, "
+                           f"Total: {total_tokens}")
+            
             return response.choices[0].message.content
         except Exception as e:
             logger.error(f"Error generating response: {e}")
@@ -50,6 +63,10 @@ class GPT:
         """Generate main response"""
         return await self._generate_response(messages)
     
+    async def update_question(self, messages: List[Dict]) -> str:
+        """Generate main response"""
+        return await self._generate_response(messages)
+    
     async def generate_embedding(self, query: str) -> str:
         """Generate text embedding"""
         try:
@@ -57,6 +74,13 @@ class GPT:
                 model=self.embedding_model,
                 input=query
             )
+            
+            # Log token usage for embeddings
+            if response.usage:
+                total_tokens = response.usage.total_tokens
+                logger.info(f"Embedding token usage - Model: {self.embedding_model}, "
+                           f"Tokens: {total_tokens}")
+            
             embedding = response.data[0].embedding
             return '[' + ','.join(map(str, embedding)) + ']'
         except Exception as e:

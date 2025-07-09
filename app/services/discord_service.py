@@ -1,7 +1,9 @@
 import logging
 import discord
 from discord.ext import commands
-from app.processor import QueryProcessor
+# from app.processor_old_title import QueryProcessor
+from app.hybrid_proccessor import QueryProcessor
+
 from app.init.postgres import init_db_pool
 from app.init.redis import init_redis_client
 from app.services.rate_limit import check_rate_limit
@@ -22,8 +24,8 @@ class ZamaDiscordBot(commands.Bot):
         
         super().__init__(command_prefix='!', intents=intents)
         
-        self.processor = None
-        
+        self.processor=None
+
     async def setup_hook(self):
         """Called when the bot is starting up"""
         logger.info("ZamaDiscordBot is starting up...")
@@ -40,7 +42,8 @@ class ZamaDiscordBot(commands.Bot):
         
         # Initialize QueryProcessor
         self.processor = QueryProcessor()
-        
+
+
     async def on_ready(self):
         """Called when the bot is ready"""
         logger.info(f'{self.user} has connected to Discord!')
@@ -111,11 +114,12 @@ class ZamaDiscordBot(commands.Bot):
                 logger.info(f"Processing query from user {user_id}: {query[:50]}...")
                 
                 # Use QueryProcessor to get answer
-                answer = await self.processor.process_query(query)
-                
+                answer_hd = await self.processor.process_query(query)
+
+
                 # Send response
-                await message.reply(answer)
-                
+                await message.reply(answer_hd)
+
                 logger.info(f"Successfully processed query for user {user_id}")
                         
             except Exception as e:

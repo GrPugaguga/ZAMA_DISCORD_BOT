@@ -1,5 +1,5 @@
 from typing import Dict, List
-from app.processor.db_utils import vector_search, title_search
+from app.processor_old_title.db_utils import vector_search, title_search
 import logging
 
 logger = logging.getLogger(__name__)

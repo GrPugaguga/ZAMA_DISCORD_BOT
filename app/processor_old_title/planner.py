@@ -2,7 +2,7 @@ import json
 import re
 from typing import Dict, List
 from app.init.model import GPT
-from app.processor.prompts import DOCUMENTATION_INDEX, PLANNER_PROMPT
+from app.processor_old_title.prompts import DOCUMENTATION_INDEX, PLANNER_PROMPT
 import logging
 
 logger = logging.getLogger(__name__)
