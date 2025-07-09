@@ -36,7 +36,7 @@ class QueryProcessor:
             
             # Step 3: Collect context from documents
             context = self._build_context(documents)
-            logger.info(f"Finded context vc: {context}")
+            # logger.info(f"Finded context vc: {context}")
 
             # Step 4: Generate final answer
             answer = await self._generate_answer(question, context)
