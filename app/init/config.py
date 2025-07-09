@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     OPENAI_TIMEOUT: int = 30
     OPENAI_MAX_RETRIES: int = 3
     OPENAI_TEMPERATURE: float = 0.1
-    OPENAI_MAX_TOKENS: int = 2000
+    OPENAI_MAX_TOKENS: int = 4000
     
     # Planner specific settings
     PLANNER_TEMPERATURE: float = 0.1
