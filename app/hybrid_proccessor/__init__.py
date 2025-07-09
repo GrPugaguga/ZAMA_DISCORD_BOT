@@ -25,11 +25,11 @@ class QueryProcessor:
         try:
             # Step 1: Get embedding for the question (handled in vector_search)
             logger.info(f"Processing question: {question}")
-            question = await self._update_query(question)
-            logger.info(f"Updated question: {question}")
+            updated_question = await self._update_query(question)
+            logger.info(f"Updated question: {updated_question}")
 
             # Step 2: Search for nearest vectors
-            documents = await self._search_documents(question)
+            documents = await self._search_documents(updated_question)
 
             if not documents:
                 return "Sorry, I couldn't find relevant information for your question."
