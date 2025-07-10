@@ -62,8 +62,9 @@ class QueryProcessor:
     async def _search_documents(self, question: str) -> List[Dict]:
         """Search for documents using vector similarity"""
         try:
-            title_result = await vector_search_by_title(question, limit=self.max_documents)
-            content_result = await vector_search_by_content(question, limit=self.max_documents)
+            embedding_str = await self.gpt_client.generate_embedding(question)
+            title_result = await vector_search_by_title(embedding_str, limit=self.max_documents)
+            content_result = await vector_search_by_content(embedding_str, limit=self.max_documents)
             
             return title_result+content_result
         except Exception as e:

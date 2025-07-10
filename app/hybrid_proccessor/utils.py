@@ -9,8 +9,8 @@ logger = logging.getLogger(__name__)
 async def vector_search_by_title(query: str, limit: int = 5) -> List[Dict]:
     """Search documents by vector similarity"""
     try:
-        client = GPT()
-        embedding_str = await client.generate_embedding(query)
+        # client = GPT()
+        # embedding_str = await client.generate_embedding(query)
         
         pool = await get_db_pool()
         
@@ -26,7 +26,7 @@ async def vector_search_by_title(query: str, limit: int = 5) -> List[Dict]:
                 FROM zama_documents
                 ORDER BY title_vector <=> $1::vector
                 LIMIT $2
-            ''', embedding_str, limit)
+            ''', query, limit)
             
             return [dict(row) for row in results]
     
@@ -37,8 +37,8 @@ async def vector_search_by_title(query: str, limit: int = 5) -> List[Dict]:
 async def vector_search_by_content(query: str, limit: int = 5) -> List[Dict]:
     """Search documents by vector similarity"""
     try:
-        client = GPT()
-        embedding_str = await client.generate_embedding(query)
+        # client = GPT()
+        # embedding_str = await client.generate_embedding(query)
         
         pool = await get_db_pool()
         
@@ -54,7 +54,7 @@ async def vector_search_by_content(query: str, limit: int = 5) -> List[Dict]:
                 FROM zama_documents
                 ORDER BY content_vector <=> $1::vector
                 LIMIT $2
-            ''', embedding_str, limit)
+            ''', query, limit)
             
             return [dict(row) for row in results]
     
