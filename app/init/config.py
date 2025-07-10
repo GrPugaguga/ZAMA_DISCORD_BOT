@@ -41,11 +41,11 @@ class Settings(BaseSettings):
     # OpenAI settings
     OPENAI_TIMEOUT: int = 30
     OPENAI_MAX_RETRIES: int = 3
-    OPENAI_TEMPERATURE: float = 0.1
+    OPENAI_TEMPERATURE: float = 0.3
     OPENAI_MAX_TOKENS: int = 4000
     
     # Planner specific settings
-    PLANNER_TEMPERATURE: float = 0.1
+    PLANNER_TEMPERATURE: float = 0.3
     PLANNER_MAX_TOKENS: int = 2000
     
     # Railway deployment settings

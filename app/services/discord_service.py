@@ -1,8 +1,8 @@
 import logging
 import discord
 from discord.ext import commands
-# from app.processor_old_title import QueryProcessor
-from app.hybrid_proccessor import QueryProcessor
+from app.new_proccessor import QueryProcessor
+# from app.hybrid_proccessor import QueryProcessor
 
 from app.init.postgres import init_db_pool
 from app.init.redis import init_redis_client

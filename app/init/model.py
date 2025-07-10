@@ -59,6 +59,15 @@ class GPT:
             response_format={"type": "json_object"}
         )
     
+    async def generate_sort_response(self, messages: List[Dict]) -> str:
+        """Generate response for planner"""
+        return await self._generate_response(
+            messages,
+            temperature=0,
+            max_tokens=100,
+            response_format={"type": "json_object"}
+        )
+    
     async def generate_main_response(self, messages: List[Dict]) -> str:
         """Generate main response"""
         return await self._generate_response(messages)
