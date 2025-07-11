@@ -1,7 +1,7 @@
 import logging
 import discord
 from discord.ext import commands
-from app.new_proccessor import QueryProcessor
+from app.agent import QueryProcessor
 # from app.hybrid_proccessor import QueryProcessor
 
 from app.init.postgres import init_db_pool
