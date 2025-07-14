@@ -24,8 +24,9 @@ A production-ready Discord bot powered by **RAG (Retrieval-Augmented Generation)
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| **Smart Document Search** | Vector similarity + title-based search | ✅ |
-| **Redis Caching** | 24h TTL for frequently accessed documents | ✅ |
+| **Intelligent Document Search** | Two-stage search: category → title filtering | ✅ |
+| **Fallback Vector Search** | Vector similarity search when categorical fails | ✅ |
+| **Redis Caching** | Multi-level caching for categories, titles, documents | ✅ |
 | **Rate Limiting** | 20 req/min per user, 60 req/min per channel | ✅ |
 | **Multi-language Support** | Responds in user's language (prompts in English) | ✅ |
 | **Production Ready** | Docker, Railway deployment, error handling | ✅ |
@@ -42,28 +43,32 @@ graph TD
     C -->|Pass| D[Query Processor]
     C -->|Block| E[Rate Limit Message]
     
-    D --> F[Query Planner]
-    D --> G[Query Executor]
-    D --> H[Response Generator]
+    D --> F[Searcher]
+    D --> G[Response Generator]
     
-    F -->|Document Selection| I[GPT-4.1-nano]
-    G --> J[Redis Cache]
-    G --> K[PostgreSQL + pgvector]
-    G --> L[Vector Search]
-    G --> M[Title Search]
+    F --> H[Category Sort]
+    F --> I[Title Sort]
+    F --> J[Document Retriever]
+    F --> K[Fallback Vector Search]
     
-    J -->|Cache Hit| N[Cached Results]
-    J -->|Cache Miss| K
+    H -->|Category Selection| L[GPT-4.1-nano]
+    I -->|Title Selection| L
+    J --> M[Redis Cache]
+    J --> N[PostgreSQL + pgvector]
+    K --> N
     
-    H -->|Final Answer| I
-    H -->|Response| B
+    M -->|Cache Hit| O[Cached Results]
+    M -->|Cache Miss| N
+    
+    G -->|Final Answer| L
+    G -->|Response| B
     B -->|Reply| A
     
     style A fill:#7289da,stroke:#fff,stroke-width:2px,color:#fff
     style B fill:#99aab5,stroke:#fff,stroke-width:2px,color:#fff
-    style I fill:#10a37f,stroke:#fff,stroke-width:2px,color:#fff
-    style J fill:#dc382d,stroke:#fff,stroke-width:2px,color:#fff
-    style K fill:#336791,stroke:#fff,stroke-width:2px,color:#fff
+    style L fill:#10a37f,stroke:#fff,stroke-width:2px,color:#fff
+    style M fill:#dc382d,stroke:#fff,stroke-width:2px,color:#fff
+    style N fill:#336791,stroke:#fff,stroke-width:2px,color:#fff
 ```
 
 ### 🔄 Data Flow
@@ -71,10 +76,10 @@ graph TD
 | Step | Component | Action | Technology |
 |------|-----------|--------|------------|
 | 1 | **Rate Limiter** | Check user/channel limits | Redis counters |
-| 2 | **Query Planner** | Analyze query & select strategy | GPT-4.1-nano + JSON mode |
-| 3 | **Query Executor** | Search documents | PostgreSQL + Redis |
-| 4 | **Vector Search** | Semantic similarity matching | OpenAI embeddings |
-| 5 | **Title Search** | Exact title matching (cached) | PostgreSQL LIKE |
+| 2 | **Category Sort** | Select relevant categories | GPT-4.1-nano + JSON mode |
+| 3 | **Title Sort** | Filter titles within categories | GPT-4.1-nano + JSON mode |
+| 4 | **Document Retriever** | Fetch documents by title+category | PostgreSQL + Redis cache |
+| 5 | **Fallback Search** | Vector similarity when needed | OpenAI embeddings + pgvector |
 | 6 | **Response Generator** | Generate final answer | GPT-4.1-nano + context |
 
 ---
@@ -132,20 +137,21 @@ CACHE_TTL_SECONDS=86400
 ### Database Schema
 
 ```sql
-CREATE TABLE zama_documents (
+CREATE TABLE zama_fdocs (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
     category TEXT,
-    subcategory TEXT,
-    keywords TEXT[],
-    content_vector vector(1536),  -- OpenAI embedding dimension
+    link TEXT,
+    t_vector vector(1536),  -- Title embedding vector
+    c_vector vector(1536),  -- Content embedding vector
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Create vector similarity index
-CREATE INDEX ON zama_documents USING ivfflat (content_vector vector_cosine_ops);
+-- Create vector similarity indexes
+CREATE INDEX ON zama_fdocs USING ivfflat (t_vector vector_cosine_ops);
+CREATE INDEX ON zama_fdocs USING ivfflat (c_vector vector_cosine_ops);
 ```
 
 ### Rate Limiting Configuration
@@ -159,8 +165,9 @@ CREATE INDEX ON zama_documents USING ivfflat (content_vector vector_cosine_ops);
 
 | Cache Type | Key Pattern | TTL | Purpose |
 |------------|-------------|-----|---------|
-| Title Search | `title_search:{query_hash}` | 24h | Document lookup optimization |
-| Document Content | Auto-managed | 24h | Reduce database queries |
+| Categories | `categories` | 24h | Cache all available categories |
+| Titles by Category | `titles:{category_hash}` | 24h | Cache titles for each category |
+| Documents by Title+Category | `docs:{title_category_hash}` | 24h | Cache document content |
 
 ---
 
@@ -175,18 +182,27 @@ class QueryProcessor:
         """Main entry point for processing user queries"""
 ```
 
-#### QueryPlanner
+#### Searcher
 ```python
-class QueryPlanner:
-    async def plan(self, query: str) -> Dict:
-        """Analyze query and determine search strategy"""
+class Searcher:
+    async def search(self, query: str) -> str:
+        """Execute two-stage search: categories → titles → documents"""
+    
+    async def sort_by_query(self, query: str) -> List[str]:
+        """Sort and select relevant categories using LLM"""
+    
+    async def title_sort(self, query: str, categories: List[str]) -> List[str]:
+        """Sort and select relevant titles within categories"""
 ```
 
-#### QueryExecutor
+#### DocumentRetriever
 ```python
-class QueryExecutor:
-    async def execute(self, planner_result: Dict, original_query: str) -> List[Dict]:
-        """Execute document search based on planner results"""
+class DocumentRetriever:
+    async def get_content_by_title_and_category(self, titles: List[str], categories: List[str]) -> List[Dict]:
+        """Retrieve documents by title and category with caching"""
+    
+    async def vector_search(self, embedding_str: str, limit: int = 4) -> List[Dict]:
+        """Fallback vector similarity search"""
 ```
 
 ### Discord Bot Commands
@@ -269,8 +285,10 @@ The bot includes comprehensive logging and error handling:
 | Operation | Time Range | Optimization |
 |-----------|------------|--------------|
 | **Cache Hit** | 50-200ms | Redis lookup |
-| **Vector Search** | 300-800ms | PostgreSQL + embeddings |
-| **Title Search** | 100-300ms | Database LIKE query |
+| **Category Sort** | 200-500ms | LLM + JSON parsing |
+| **Title Sort** | 200-500ms | LLM + JSON parsing |
+| **Document Retrieval** | 100-300ms | PostgreSQL + Redis cache |
+| **Vector Search (Fallback)** | 300-800ms | PostgreSQL + embeddings |
 | **Full Pipeline** | 1-3 seconds | End-to-end processing |
 
 ### Resource Usage
@@ -296,46 +314,50 @@ ZAMA_DISCORD_BOT/
 │   │   ├── model.py         # OpenAI GPT interface
 │   │   ├── postgres.py      # Database connection pool
 │   │   └── redis.py         # Redis client
-│   ├── processor/           # RAG processing pipeline
+│   ├── agent/               # Current RAG implementation
 │   │   ├── __init__.py      # Main QueryProcessor
-│   │   ├── planner.py       # Query planning logic
-│   │   ├── executor.py      # Search execution
-│   │   ├── db_utils.py      # Database utilities
-│   │   └── prompts.py       # LLM prompts
-│   └── services/            # External services
-│       ├── discord_service.py  # Discord bot implementation
-│       ├── rate_limit.py       # Rate limiting logic
-│       └── redis_service.py    # Redis caching utilities
+│   │   ├── searcher.py      # Two-stage search logic
+│   │   ├── utils.py         # DocumentRetriever class
+│   │   └── prompt.py        # LLM prompts
+│   ├── services/            # External services
+│   │   ├── discord_service.py  # Discord bot implementation
+│   │   ├── rate_limit.py       # Rate limiting logic
+│   │   └── redis_service.py    # Redis caching utilities
+│   ├── old_releases/        # Previous implementations
+│   │   ├── hybrid_proccessor/
+│   │   ├── vc_proccessor/
+│   │   └── vt_proccessor/
+│   └── main.py             # Application entry point
 ├── requirements.txt         # Python dependencies
 ├── Dockerfile              # Container configuration
 ├── railway.json           # Railway deployment config
+├── CLAUDE.md              # Development guidelines
 └── README.md              # This file
 ```
 
 ### Adding New Features
 
-1. **New Search Method**
+1. **New Search Stage**
    ```python
-   # In app/processor/executor.py
-   async def new_search_method(self, query: str) -> List[Dict]:
-       # Implementation here
+   # In app/agent/searcher.py
+   async def new_search_stage(self, query: str, previous_results: List[str]) -> List[str]:
+       # Add new filtering stage in search pipeline
        pass
    ```
 
-2. **Custom Rate Limits**
+2. **Custom Document Retrieval**
    ```python
-   # In app/services/rate_limit.py
-   CUSTOM_LIMITS = {
-       'premium_users': 100,  # 100 req/min for premium
-       'admin_users': 0       # No limit for admins
-   }
+   # In app/agent/utils.py
+   async def get_content_by_custom_filter(self, filter_params: Dict) -> List[Dict]:
+       # Custom document retrieval logic
+       pass
    ```
 
-3. **Additional Caching**
+3. **Extended Caching**
    ```python
    # In app/services/redis_service.py
-   async def cache_embeddings(self, text: str, embedding: List[float]):
-       # Cache embeddings to avoid recomputation
+   async def cache_search_results(self, query_hash: str, results: List[Dict]):
+       # Cache complete search results
    ```
 
 ---
