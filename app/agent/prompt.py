@@ -16,9 +16,9 @@ Guidelines:
 - General/what is questions → protocol-owerview + related
 - Technical implementation → technical-question + specific area
 - Token/TGE/economics → zama-token + protocol-owerview  
-- Programs → zama-developer-program or zama-creator-program
+- Programs/rewards → zama-developer-program and zama-creator-program
 - Level, quests, roles - zama-developer-program and zama-creator-program
-- Bounty/rewards → bounty + zama-developer-program or zama-creator-program
+- Bounty → bounty + zama-developer-program or zama-creator-program
 - FHE/encryption specifics → technical-question
 - FHE Os quest   → fhe-state-os
 
